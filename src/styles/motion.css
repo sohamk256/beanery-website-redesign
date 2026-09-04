@@ -227,14 +227,14 @@
   50% { opacity: .16; transform: translateX(-50%) scale(1.018); }
 }
 
-/* A faithful animated echo of the real woven flower pendants. */
-[data-home-hero] > div:not([data-hanging-flower]) { position: relative; z-index: 1; }
-[data-hanging-flower] {
+/* An anime-like cut-paper echo of the real flower pendants. */
+[data-flower-section] { position: relative; overflow: hidden; isolation: isolate; }
+[data-flower-section] > :not([data-paper-flower]) { position: relative; z-index: 1; }
+[data-paper-flower] {
+  --lamp-opacity: .56;
+  --lamp-peak: .64;
   position: absolute;
   z-index: 0;
-  top: 188px;
-  right: clamp(18px, 4.2vw, 76px);
-  width: clamp(112px, 13vw, 190px);
   pointer-events: auto;
   transform-origin: 50% 0;
   filter: drop-shadow(0 22px 24px rgba(53,38,31,.2));
@@ -242,12 +242,23 @@
   animation: bnLampArrive 1.25s .55s var(--ease) both,
              bnLampSway 7.4s 1.8s ease-in-out infinite;
 }
-[data-hanging-flower] img {
+[data-flower-variant="hero"] {
+  --lamp-opacity: .72;
+  --lamp-peak: .78;
+  top: 188px;
+  right: clamp(18px, 4.2vw, 76px);
+  width: clamp(112px, 13vw, 190px);
+}
+[data-flower-variant="menu"] { top: 190px; right: clamp(20px, 4vw, 68px); width: clamp(94px, 9vw, 146px); }
+[data-flower-variant="coffee"] { top: 190px; right: clamp(24px, 5vw, 94px); width: clamp(104px, 10vw, 156px); }
+[data-flower-variant="story"] { top: 186px; right: clamp(22px, 4.5vw, 82px); width: clamp(98px, 9.5vw, 150px); }
+[data-flower-variant="visit"] { top: 190px; right: clamp(24px, 5vw, 92px); width: clamp(102px, 10vw, 156px); }
+[data-paper-flower] img {
   display: block;
   width: 100%;
   height: auto;
 }
-[data-hanging-flower] span {
+[data-paper-flower] span {
   position: absolute;
   left: 49%;
   top: 54%;
@@ -258,14 +269,14 @@
   box-shadow: 0 0 22px 13px rgba(255,205,112,.26);
   animation: bnLampGlow 3.8s ease-in-out infinite;
 }
-[data-hanging-flower]:hover { filter: drop-shadow(0 25px 29px rgba(53,38,31,.25)); }
+[data-paper-flower]:hover { filter: drop-shadow(0 25px 29px rgba(53,38,31,.25)); }
 @keyframes bnLampArrive {
   from { opacity: 0; transform: rotate(calc(var(--lamp-cursor-angle) - 3.5deg)); }
-  to { opacity: .72; transform: rotate(calc(var(--lamp-cursor-angle) + 1.1deg)); }
+  to { opacity: var(--lamp-opacity); transform: rotate(calc(var(--lamp-cursor-angle) + 1.1deg)); }
 }
 @keyframes bnLampSway {
-  0%, 100% { opacity: .72; transform: rotate(calc(var(--lamp-cursor-angle) + 1.1deg)); }
-  50% { opacity: .78; transform: rotate(calc(var(--lamp-cursor-angle) - 1.1deg)); }
+  0%, 100% { opacity: var(--lamp-opacity); transform: rotate(calc(var(--lamp-cursor-angle) + 1.1deg)); }
+  50% { opacity: var(--lamp-peak); transform: rotate(calc(var(--lamp-cursor-angle) - 1.1deg)); }
 }
 @keyframes bnLampGlow {
   0%, 100% { opacity: .7; transform: scale(.86); }
@@ -311,12 +322,15 @@
   [data-face-signature] { right: -28%; top: 7%; width: 78vw; opacity: .08; }
   [data-feature-copy] { padding-block: 38px 12px; }
   [data-feature-relief] { right: -9%; width: 78%; opacity: .65; }
-  [data-hanging-flower] { top: 176px; right: 8px; width: 104px; opacity: .48; }
+  [data-paper-flower] { right: 8px; width: 88px; --lamp-opacity: .42; --lamp-peak: .5; }
+  [data-flower-variant="hero"] { top: 176px; width: 104px; --lamp-opacity: .48; --lamp-peak: .56; }
+  [data-flower-variant="menu"] { top: 160px; }
+  [data-flower-variant="coffee"], [data-flower-variant="story"], [data-flower-variant="visit"] { top: 174px; }
   [data-real-interior] > span { left: 20px; bottom: 20px; max-width: 23ch; line-height: 1.5; }
 }
 
 @media (pointer: coarse), (prefers-reduced-motion: reduce) {
-  [data-hanging-flower] { --lamp-cursor-angle: 0deg; }
+  [data-paper-flower] { --lamp-cursor-angle: 0deg; }
 }
 
 /* - page change: the incoming page settles rather than snapping in - */

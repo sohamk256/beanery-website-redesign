@@ -4,7 +4,7 @@ import LocalityMap from './components/LocalityMap';
 import logoDark from './assets/brand/beanery-logo-dark.png';
 import logoLight from './assets/brand/beanery-logo-light.png';
 import faceRelief from './assets/brand/beanery-face-relief-v1.webp';
-import flowerLamp from './assets/brand/beanery-flower-lamp-v1.webp';
+import flowerLamp from './assets/brand/beanery-flower-lamp-anime-papercraft-v3.webp';
 import venueInterior from './assets/images/beanery-interior-real-v1.webp';
 import { st } from './lib/style';
 import './styles/global.css';
@@ -56,10 +56,20 @@ const FOOD_MENU = [
   },
 ];
 
+function PaperFlower({ variant = 'page' }) {
+  return (
+    <div data-paper-flower="" data-flower-variant={variant} aria-hidden="true">
+      <img src={flowerLamp} alt="" />
+      <span />
+    </div>
+  );
+}
+
 function PracticalFoodMenu({ openOrder, openReserve }) {
   return (
     <main className="menu-page">
-      <header className="menu-hero">
+      <header className="menu-hero" data-flower-section="">
+        <PaperFlower variant="menu" />
         <div className="menu-hero__eyebrow"><span>Beanery · Pune</span><span>Served daily from 8 AM</span></div>
         <div className="menu-hero__grid">
           <div>
@@ -196,16 +206,14 @@ export default class App extends React.Component {
       if (this.pointerFrame) return;
       this.pointerFrame = requestAnimationFrame(() => {
         this.pointerFrame = null;
-        const lamp = document.querySelector('[data-hanging-flower]');
-        if (!lamp) return;
+        const lamps = document.querySelectorAll('[data-paper-flower]');
+        if (!lamps.length) return;
         const x = Math.max(-1, Math.min(1, (this.pointerX / window.innerWidth - .5) * 2));
-        lamp.style.setProperty('--lamp-cursor-angle', `${x * 2.2}deg`);
+        lamps.forEach((lamp) => lamp.style.setProperty('--lamp-cursor-angle', `${x * 2.2}deg`));
       });
     };
     this.resetPointer = () => {
-      const lamp = document.querySelector('[data-hanging-flower]');
-      if (!lamp) return;
-      lamp.style.removeProperty('--lamp-cursor-angle');
+      document.querySelectorAll('[data-paper-flower]').forEach((lamp) => lamp.style.removeProperty('--lamp-cursor-angle'));
     };
     window.addEventListener('pointermove', this.onPointerMove, { passive: true });
     window.addEventListener('blur', this.resetPointer);
@@ -543,11 +551,8 @@ export default class App extends React.Component {
         {isHome && (
           <>
             <div>
-              <section data-home-hero="" style={st("padding:146px 40px 0;background:#FBF8F4;position:relative;overflow:hidden;isolation:isolate")}>
-                <div data-hanging-flower="" aria-hidden="true">
-                  <img src={flowerLamp} alt="" />
-                  <span />
-                </div>
+              <section data-home-hero="" data-flower-section="" style={st("padding:146px 40px 0;background:#FBF8F4;position:relative;overflow:hidden;isolation:isolate")}>
+                <PaperFlower variant="hero" />
                 <div style={st("max-width:1560px;margin:0 auto")}>
                   <div style={st("display:flex;justify-content:space-between;align-items:flex-end;gap:40px;flex-wrap:wrap;padding-bottom:26px;border-bottom:1px solid rgba(94,43,23,.14)")}>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#A35730;font-weight:500")}>
@@ -1360,7 +1365,8 @@ export default class App extends React.Component {
         {isCoffee && (
           <>
             <div>
-              <section style={st("padding:146px 40px 0;background:#FBF8F4")}>
+              <section data-flower-section="" style={st("padding:146px 40px 0;background:#FBF8F4")}>
+                <PaperFlower variant="coffee" />
                 <div style={st("max-width:1560px;margin:0 auto")}>
                   <div style={st("display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap;padding-bottom:24px;border-bottom:1px solid rgba(94,43,23,.14)")}>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#A35730;font-weight:500")}>
@@ -2015,7 +2021,8 @@ export default class App extends React.Component {
         {isStory && (
           <>
             <div>
-              <section style={st("padding:146px 40px 0;background:#FBF8F4")}>
+              <section data-flower-section="" style={st("padding:146px 40px 0;background:#FBF8F4")}>
+                <PaperFlower variant="story" />
                 <div style={st("max-width:1560px;margin:0 auto")}>
                   <div style={st("display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap;padding-bottom:24px;border-bottom:1px solid rgba(94,43,23,.14)")}>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#A35730;font-weight:500")}>
@@ -2421,7 +2428,8 @@ export default class App extends React.Component {
         {isVisit && (
           <>
             <div>
-              <section style={st("padding:146px 40px 0;background:#FBF8F4")}>
+              <section data-flower-section="" style={st("padding:146px 40px 0;background:#FBF8F4")}>
+                <PaperFlower variant="visit" />
                 <div style={st("max-width:1560px;margin:0 auto")}>
                   <div style={st("display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap;padding-bottom:24px;border-bottom:1px solid rgba(94,43,23,.14)")}>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#A35730;font-weight:500")}>
