@@ -6,78 +6,68 @@ import logoLight from './assets/brand/beanery-logo-light.png';
 import faceRelief from './assets/brand/beanery-face-relief-v1.webp';
 import flowerLamp from './assets/brand/beanery-flower-lamp-anime-papercraft-v3.webp';
 import venueInterior from './assets/images/beanery-interior-real-v1.webp';
+import { ContentContext, useContent } from './content/ContentProvider';
 import { st } from './lib/style';
 import './styles/global.css';
 import './styles/hover.css';
 import './styles/motion.css';
 
-const RESERVE_URL = 'https://www.google.com/maps/reserve/v/dine/c/pclcfD0uASk';
-const MAPS_URL = 'https://maps.app.goo.gl/VFNfybtJFMzzDoCM9?g_st=aw';
-const INSTAGRAM_URL = 'https://www.instagram.com/beanery.pune/';
-const LIVE_MENU_URL = 'https://www.zomato.com/pune/beanery-cafe-senapati-bapat-road/order?disableOpenApp=1&fsc=1';
 
-const FOOD_MENU = [
-  {
-    id: 'light', number: '01', title: 'Soups & salads', note: 'Lighter plates, made to order.',
-    items: [
-      ['Carrot Bisque', 'Silky carrot and ginger soup, crispy sweet potato', 'V'],
-      ['Burrata di Puglia', 'Burrata, heirloom tomatoes, basil, extra virgin olive oil', 'V'],
-      ['Beetroot & Orange Salad', 'Kale, wild rice, candied walnut, mascarpone, citrus', 'V'],
-      ['Chicken Caesar Salad', 'Roasted chicken, romaine, croutons, tomato, parmesan', 'NV'],
-    ],
-  },
-  {
-    id: 'small-plates', number: '02', title: 'Sandwiches & small plates', note: 'For the table or a quick lunch.',
-    items: [
-      ['Roasted Mushroom Sandwich', 'Sour cream, cheddar, mushroom and confit onion', 'V'],
-      ['Three Cheese Sandwich', 'Focaccia, onion marmalade and three cheeses', 'V'],
-      ['Corn Ribs', 'Charred sweet corn with herb tzatziki', 'V'],
-      ['French Chicken Confit', 'Slow-cooked chicken, mash and chicken jus', 'NV'],
-    ],
-  },
-  {
-    id: 'pasta', number: '03', title: 'Pasta & mains', note: 'Substantial plates from the kitchen.',
-    items: [
-      ['Aglio e Olio', 'Garlic butter, chilli, olives, tomato and parmesan', 'V'],
-      ['Spaghetti al Pesto Piccante', 'Spicy pesto, pine nuts, parmesan and burrata', 'V'],
-      ['Pesto-Grilled Cottage Cheese', 'Fragrant rice, seasonal vegetables and pesto', 'V'],
-      ['Chicken Xacuti', 'Goan-spiced chicken with burnt garlic rice', 'NV'],
-    ],
-  },
-  {
-    id: 'pizza-dessert', number: '04', title: 'Pizza & dessert', note: 'Neapolitan-style pies and something sweet.',
-    items: [
-      ['Margherita', 'Pomodoro, cherry tomato, fresh mozzarella and basil', 'V'],
-      ['Mediterranean', 'Olives, peppers, mushroom, mozzarella and feta', 'V'],
-      ['Cajun Smoked Chicken', 'Chicken, peppers, paprika chilli and mozzarella', 'NV'],
-      ['Old School Chocolate Cake', 'A rich house chocolate cake', 'V'],
-      ['Blueberry Cheesecake', 'Creamy cheesecake with blueberry', 'V'],
-    ],
-  },
-];
+
+
+/**
+ * Safari paints a grey placeholder box for an <img> that already has layout
+ * dimensions but no decoded data yet - Chrome paints nothing there. `Img`
+ * keeps the element hidden until the load settles, so the box never shows.
+ * The ref covers images the cache completes before React attaches onLoad.
+ */
+function settleImg(el) {
+  if (el && el.complete) el.setAttribute('data-settled', '');
+}
+
+function onSettle(e) {
+  e.currentTarget.setAttribute('data-settled', '');
+}
+
+function Img(props) {
+  return <img {...props} data-await-load="" ref={settleImg} onLoad={onSettle} onError={onSettle} />;
+}
+
+/** Renders newline-separated content as <br />-separated lines. */
+function Lines({ text }) {
+  return String(text ?? '').split('\n').map((line, i) => (
+    <React.Fragment key={i}>
+      {i > 0 ? <br /> : null}
+      {line}
+    </React.Fragment>
+  ));
+}
 
 function PaperFlower({ variant = 'page' }) {
   return (
     <div data-paper-flower="" data-flower-variant={variant} aria-hidden="true">
-      <img src={flowerLamp} alt="" />
+      <Img src={flowerLamp} alt="" loading="eager" fetchpriority="high" decoding="async" />
       <span />
     </div>
   );
 }
 
 function PracticalFoodMenu({ openOrder, openReserve }) {
+  const { menu } = useContent();
+  const groups = menu.groups;
+
   return (
     <main className="menu-page">
       <header className="menu-hero" data-flower-section="">
         <PaperFlower variant="menu" />
-        <div className="menu-hero__eyebrow"><span>Beanery · Pune</span><span>Served daily from 8 AM</span></div>
+        <div className="menu-hero__eyebrow"><span>{menu.eyebrowLeft}</span><span>{menu.eyebrowRight}</span></div>
         <div className="menu-hero__grid">
           <div>
-            <p className="menu-kicker">The food menu</p>
-            <h1>Choose well.<br /><em>Stay a while.</em></h1>
+            <p className="menu-kicker">{menu.kicker}</p>
+            <h1>{menu.titleLine1}<br /><em>{menu.titleLine2}</em></h1>
           </div>
           <div className="menu-hero__aside">
-            <p>A concise guide to the kitchen. Availability and pricing can change with the day; the live ordering menu is always current.</p>
+            <p>{menu.intro}</p>
             <div className="menu-actions">
               <button onClick={openOrder}>View live menu</button>
               <button className="menu-actions__quiet" onClick={openReserve}>Reserve a table</button>
@@ -87,7 +77,7 @@ function PracticalFoodMenu({ openOrder, openReserve }) {
       </header>
 
       <nav className="menu-jump" aria-label="Menu categories">
-        {FOOD_MENU.map((group) => (
+        {groups.map((group) => (
           <button key={group.id} onClick={() => document.getElementById(`menu-${group.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
             {group.title}
           </button>
@@ -97,21 +87,23 @@ function PracticalFoodMenu({ openOrder, openReserve }) {
       <div className="menu-legend">
         <span><i className="menu-dot menu-dot--veg" /> V · Vegetarian</span>
         <span><i className="menu-dot menu-dot--nonveg" /> NV · Non-vegetarian</span>
-        <span>Please tell the team about allergies before ordering.</span>
+        <span>{menu.legendNote}</span>
       </div>
 
       <div className="menu-groups">
-        {FOOD_MENU.map((group) => (
+        {groups.map((group) => (
           <section id={`menu-${group.id}`} className="menu-group" key={group.id}>
             <div className="menu-group__heading">
               <span>{group.number}</span>
               <div><h2>{group.title}</h2><p>{group.note}</p></div>
             </div>
             <div className="menu-items">
-              {group.items.map(([name, description, diet]) => (
-                <article className="menu-item" key={name}>
-                  <div><h3>{name}</h3><p>{description}</p></div>
-                  <span className={`menu-diet menu-diet--${diet === 'V' ? 'veg' : 'nonveg'}`} role="img" aria-label={diet === 'V' ? 'Vegetarian' : 'Non-vegetarian'} />
+              {group.items.map((entry, i) => (
+                <article className="menu-item" key={`${group.id}-${i}`}>
+                  <div><h3>{entry.name}</h3><p>{entry.description}</p></div>
+                  {/* Price is optional - an item with none simply shows the diet mark. */}
+                  {entry.price ? <span className="menu-price">{entry.price}</span> : null}
+                  <span className={`menu-diet menu-diet--${entry.diet === 'V' ? 'veg' : 'nonveg'}`} role="img" aria-label={entry.diet === 'V' ? 'Vegetarian' : 'Non-vegetarian'} />
                 </article>
               ))}
             </div>
@@ -139,6 +131,10 @@ function PracticalFoodMenu({ openOrder, openReserve }) {
  * Props mirror the three knobs the design exposed in its properties panel.
  */
 export default class App extends React.Component {
+  // The site's editable copy, images and links. A class component reads it
+  // through contextType rather than the useContent hook.
+  static contextType = ContentContext;
+
   static defaultProps = {
     motion: 'soft', // 'restrained' | 'soft' | 'rich'
     showPrices: true,
@@ -382,6 +378,9 @@ export default class App extends React.Component {
 
   renderVals() {
     const page = this.state.page;
+    const content = this.context;
+    const site = content.site;
+    const copy = content.pages;
     const mk = (arr) => arr.map(([key, label]) => ({
       key, label, go: this.go(key), active: page === key ? '1' : '0',
       style: page === key ? 'font-size:12px;letter-spacing:.11em;text-transform:uppercase;font-weight:500;color:#A35730;cursor:pointer' : 'font-size:12px;letter-spacing:.11em;text-transform:uppercase;font-weight:500;color:#5E2B17;cursor:pointer',
@@ -391,6 +390,8 @@ export default class App extends React.Component {
     const part = this.dayparts[this.state.part] || this.dayparts[0];
 
     return {
+      copy,
+      site,
       pillars: this.pillars,
       dayparts: this.dayparts.map((d, i) => ({
         ...d, i,
@@ -445,9 +446,9 @@ export default class App extends React.Component {
       railRefSig: this.railRef('sig'), railSigPrev: this.scrollRail('sig', -1), railSigNext: this.scrollRail('sig', 1),
       railRefBrew: this.railRef('brew'), railBrewPrev: this.scrollRail('brew', -1), railBrewNext: this.scrollRail('brew', 1),
       railRefExp: this.railRef('exp'), railExpPrev: this.scrollRail('exp', -1), railExpNext: this.scrollRail('exp', 1),
-      openReserve: (e) => { if (e) e.preventDefault(); window.open(RESERVE_URL, '_blank', 'noopener,noreferrer'); },
-      openOrder: (e) => { if (e) e.preventDefault(); window.open(MAPS_URL, '_blank', 'noopener,noreferrer'); },
-      openMenuOrder: (e) => { if (e) e.preventDefault(); window.open(LIVE_MENU_URL, '_blank', 'noopener,noreferrer'); },
+      openReserve: (e) => { if (e) e.preventDefault(); window.open(site.reserveUrl, '_blank', 'noopener,noreferrer'); },
+      openOrder: (e) => { if (e) e.preventDefault(); window.open(site.mapsUrl, '_blank', 'noopener,noreferrer'); },
+      openMenuOrder: (e) => { if (e) e.preventDefault(); window.open(site.liveMenuUrl, '_blank', 'noopener,noreferrer'); },
       goCoffee: this.go('coffee'), goFood: this.go('food'), goStory: this.go('story'),
       goJournal: this.go('journal'), goVisit: this.go('visit'), goExp: this.go('experiences'),
     };
@@ -455,13 +456,13 @@ export default class App extends React.Component {
 
   render() {
     const {
-      bean, beanProfile, beans, brews, closeMenu, cup, cups, dayparts,
+      bean, beanProfile, beans, brews, closeMenu, copy, cup, cups, dayparts,
       goCoffee, goExp, goFood, goHome, goJournal, goStory, goVisit,
       isCoffee, isExp, isFood, isHome, isJournal, isStory, isVisit,
       journal, menuOpen, navAll, navLeft, navRef, navRight, openMenu, openMenuOrder, openOrder, openReserve,
       part, pillars, railBrewNext, railBrewPrev, railExpNext, railExpPrev, railRefBrew,
       railRefExp, railRefSig, railSigNext, railSigPrev,
-      showPrices, signature, testimonials,
+      showPrices, signature, site, testimonials,
     } = this.renderVals();
 
     return (
@@ -470,9 +471,9 @@ export default class App extends React.Component {
       <div data-scroll-progress="" aria-hidden="true" />
       <div data-site-intro="" aria-hidden="true">
         <div data-intro-faces="">
-          <img src={faceRelief} alt="" />
-          <img src={faceRelief} alt="" />
-          <img src={faceRelief} alt="" />
+          <Img src={faceRelief} alt="" loading="eager" fetchpriority="high" decoding="async" />
+          <Img src={faceRelief} alt="" loading="eager" fetchpriority="high" decoding="async" />
+          <Img src={faceRelief} alt="" loading="eager" fetchpriority="high" decoding="async" />
         </div>
         <div data-intro-lockup="">
           <small>Awaken the senses</small>
@@ -498,7 +499,7 @@ export default class App extends React.Component {
             ))}
           </nav>
           <a href="#/home" onClick={goHome} style={st("text-align:center;display:flex;flex-direction:column;align-items:center;cursor:pointer")}>
-            <img src={logoDark} alt="Beanery: Coffee · Kitchen" style={st("width:175px;height:auto;display:block")} />
+            <Img src={logoDark} alt="Beanery: Coffee · Kitchen" style={st("width:175px;height:auto;display:block")} />
           </a>
           <nav data-r="deskonly" style={st("display:flex;gap:26px;align-items:center;justify-content:flex-end")}>
             {navRight.map((item, i) => (
@@ -521,7 +522,7 @@ export default class App extends React.Component {
         <>
           <div data-overlay="menu" style={st("position:fixed;inset:0;z-index:150;background:#FBF8F4;display:flex;flex-direction:column;padding:26px 24px 40px")}>
             <div style={st("display:flex;justify-content:space-between;align-items:center")}>
-              <img src={logoDark} alt="Beanery: Coffee · Kitchen" style={st("width:136px;height:auto;display:block")} />
+              <Img src={logoDark} alt="Beanery: Coffee · Kitchen" style={st("width:136px;height:auto;display:block")} />
               <button onClick={closeMenu} aria-label="Close menu" style={st("background:transparent;border:none;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#96755C;cursor:pointer")}>
                 Close ×
               </button>
@@ -556,20 +557,20 @@ export default class App extends React.Component {
                 <div style={st("max-width:1560px;margin:0 auto")}>
                   <div style={st("display:flex;justify-content:space-between;align-items:flex-end;gap:40px;flex-wrap:wrap;padding-bottom:26px;border-bottom:1px solid rgba(94,43,23,.14)")}>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#A35730;font-weight:500")}>
-                      Established 2025 · Pune, India
+                      {copy.home.eyebrowLeft}
                     </div>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#96755C")}>
-                      Coffee · Kitchen · All day
+                      {copy.home.eyebrowRight}
                     </div>
                   </div>
                   <h1 data-reveal="0" style={st("font-family:'Playfair Display',Georgia,serif;font-weight:400;font-size:clamp(46px,8.6vw,158px);line-height:.9;letter-spacing:-.03em;margin:52px 0 0")}>
-                    Made for coffee.
+                    {copy.home.titleLine1}
                     <br />
-                    <span style={st("font-style:italic;color:#A35730")}>Built for the whole day.</span>
+                    <span style={st("font-style:italic;color:#A35730")}>{copy.home.titleLine2}</span>
                   </h1>
                   <div data-reveal="120" style={st("display:grid;grid-template-columns:1.1fr 1fr;gap:56px;align-items:end;margin:56px 0 60px")}>
                     <p style={st("font-size:16.5px;line-height:1.75;color:#6E4A34;max-width:56ch")}>
-                      From traceable coffees and precise brews to sourdough, pasta and dessert, Beanery is built around the things we want to return to, made with care, served without fuss.
+                      {copy.home.intro}
                     </p>
                     <div style={st("display:flex;gap:14px;justify-content:flex-end;flex-wrap:wrap")}>
                       <button className="hv2" onClick={openReserve} style={st("font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;font-weight:500;color:#FBF8F4;background:#5E2B17;border:none;padding:19px 34px;cursor:pointer;transition:background .35s ease")}>
@@ -583,17 +584,17 @@ export default class App extends React.Component {
                   <div data-reveal="200" style={st("display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:18px;align-items:end")}>
                     <div style={st("overflow:hidden;height:60vh;min-height:420px;background:#EFE3D8")}>
                       <div className="hv7" style={st("width:100%;height:100%;transition:transform 1.4s cubic-bezier(.2,.7,.2,1)")}>
-                        <ImageSlot id="hero-grid-1" placeholder="Wide: the dining room in warm daylight - banquette, glassware, marble counter, guests mid-meal" />
+                        <ImageSlot id="hero-grid-1" priority placeholder="Wide: the dining room in warm daylight - banquette, glassware, marble counter, guests mid-meal" />
                       </div>
                     </div>
                     <div style={st("overflow:hidden;height:44vh;min-height:320px;background:#DFCBB9")}>
                       <div className="hv7" style={st("width:100%;height:100%;transition:transform 1.4s cubic-bezier(.2,.7,.2,1)")}>
-                        <ImageSlot id="hero-grid-2" placeholder="Close craft: espresso extraction into a warm cup, crema forming, barista hands, shallow depth" />
+                        <ImageSlot id="hero-grid-2" priority placeholder="Close craft: espresso extraction into a warm cup, crema forming, barista hands, shallow depth" />
                       </div>
                     </div>
                     <div style={st("overflow:hidden;height:52vh;min-height:380px;background:#EFE3D8")}>
                       <div className="hv7" style={st("width:100%;height:100%;transition:transform 1.4s cubic-bezier(.2,.7,.2,1)")}>
-                        <ImageSlot id="hero-grid-3" placeholder="Restaurant plating: chef's hands finishing a dish with sauce and oil, overhead, dark ceramic" />
+                        <ImageSlot id="hero-grid-3" priority placeholder="Restaurant plating: chef's hands finishing a dish with sauce and oil, overhead, dark ceramic" />
                       </div>
                     </div>
                   </div>
@@ -662,7 +663,7 @@ export default class App extends React.Component {
                   <div data-feature-copy="">
                     <div data-feature-relief="" aria-hidden="true">
                       <span />
-                      <img src={faceRelief} alt="" />
+                      <Img src={faceRelief} alt="" />
                     </div>
                     <div data-reveal="40" style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#A35730;font-weight:500")}>
                       Featured coffee · On the bar
@@ -845,7 +846,7 @@ export default class App extends React.Component {
               <section data-home-story="" style={st("display:grid;grid-template-columns:1fr 1fr;min-height:88vh;background:#FBF8F4")}>
                 <div data-sculpture-copy="" style={st("padding:130px 40px;max-width:820px;margin-right:auto;display:flex;flex-direction:column;justify-content:center;order:2;position:relative;overflow:hidden")}>
                   <div data-face-signature="" aria-hidden="true">
-                    <img src={faceRelief} alt="" />
+                    <Img src={faceRelief} alt="" />
                   </div>
                   <div data-reveal="0" style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#A35730;font-weight:500")}>
                     Why Beanery
@@ -868,7 +869,7 @@ export default class App extends React.Component {
                 </div>
                 <div style={st("position:relative;overflow:hidden;background:#DFCBB9;min-height:520px;order:1")}>
                   <div data-real-interior="" className="hv7" style={st("position:absolute;inset:0;transition:transform 1.5s cubic-bezier(.2,.7,.2,1)")}>
-                    <img src={venueInterior} alt="Beanery dining room with cane furniture, flower pendant lights and warm plaster walls" loading="lazy" decoding="async" />
+                    <Img src={venueInterior} alt="Beanery dining room with cane furniture, flower pendant lights and warm plaster walls" loading="lazy" decoding="async" />
                     <span>Inside Beanery · Senapati Bapat Road</span>
                   </div>
                 </div>
@@ -1289,11 +1290,7 @@ export default class App extends React.Component {
                       <p style={st("font-size:15px;line-height:1.75;margin-top:14px")}>
                         Beanery Coffee · Kitchen
                         <br />
-                        Beside Chaturshrungi Temple
-                        <br />
-                        Senapati Bapat Road
-                        <br />
-                        Pune 411016
+                        <Lines text={copy.visit.address} />
                       </p>
                     </div>
                     <div>
@@ -1370,27 +1367,27 @@ export default class App extends React.Component {
                 <div style={st("max-width:1560px;margin:0 auto")}>
                   <div style={st("display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap;padding-bottom:24px;border-bottom:1px solid rgba(94,43,23,.14)")}>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#A35730;font-weight:500")}>
-                      Coffee
+                      {copy.coffee.eyebrowLeft}
                     </div>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#96755C")}>
-                      Origins · Espresso · Manual brews
+                      {copy.coffee.eyebrowRight}
                     </div>
                   </div>
                   <div style={st("display:grid;grid-template-columns:1.35fr 1fr;gap:64px;align-items:end;margin-top:52px")}>
                     <h1 data-reveal="0" style={st("font-family:'Playfair Display',Georgia,serif;font-weight:400;font-size:clamp(44px,7vw,124px);line-height:.93;letter-spacing:-.03em")}>
-                      Coffee, chosen
+                      {copy.coffee.titleLine1}
                       <br />
-                      with purpose,
+                      {copy.coffee.titleLine2}
                       <br />
-                      <span style={st("font-style:italic;color:#A35730")}>brewed with care.</span>
+                      <span style={st("font-style:italic;color:#A35730")}>{copy.coffee.titleLine3}</span>
                     </h1>
                     <p data-reveal="80" style={st("font-size:16px;line-height:1.8;color:#6E4A34;max-width:44ch;padding-bottom:14px")}>
-                      Our coffee list moves with the season. We choose traceable lots for sweetness and character, then dial each one for the way it is served: espresso, filter or milk.
+                      {copy.coffee.intro}
                     </p>
                   </div>
                   <div data-reveal="140" style={st("margin-top:64px;overflow:hidden;height:62vh;min-height:430px;background:#EFE3D8")}>
                     <div className="hv6" style={st("width:100%;height:100%;transition:transform 1.6s cubic-bezier(.2,.7,.2,1)")}>
-                      <ImageSlot id="coffee-hero" placeholder="Full-width: cupping table mid-session - bowls, spoons, green and roasted lots, hands (wide editorial crop)" />
+                      <ImageSlot id="coffee-hero" priority placeholder="Full-width: cupping table mid-session - bowls, spoons, green and roasted lots, hands (wide editorial crop)" />
                     </div>
                   </div>
                 </div>
@@ -2026,20 +2023,20 @@ export default class App extends React.Component {
                 <div style={st("max-width:1560px;margin:0 auto")}>
                   <div style={st("display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap;padding-bottom:24px;border-bottom:1px solid rgba(94,43,23,.14)")}>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#A35730;font-weight:500")}>
-                      Our story
+                      {copy.story.eyebrowLeft}
                     </div>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#96755C")}>
-                      Established 2025 · Pune
+                      {copy.story.eyebrowRight}
                     </div>
                   </div>
                   <h1 data-reveal="0" style={st("font-family:'Playfair Display',Georgia,serif;font-weight:400;font-size:clamp(44px,7.4vw,132px);line-height:.92;letter-spacing:-.03em;margin-top:52px")}>
-                    Made from coffee.
+                    {copy.story.titleLine1}
                     <br />
-                    <span style={st("font-style:italic;color:#A35730")}>Shaped by the room.</span>
+                    <span style={st("font-style:italic;color:#A35730")}>{copy.story.titleLine2}</span>
                   </h1>
                   <div data-reveal="120" style={st("margin-top:60px;overflow:hidden;height:66vh;min-height:440px;background:#EFE3D8")}>
                     <div className="hv6" style={st("width:100%;height:100%;transition:transform 1.6s cubic-bezier(.2,.7,.2,1)")}>
-                      <ImageSlot id="story-hero" placeholder="Full-width: the room in afternoon light - occupied tables, glassware, west sun across marble (wide)" />
+                      <ImageSlot id="story-hero" priority placeholder="Full-width: the room in afternoon light - occupied tables, glassware, west sun across marble (wide)" />
                     </div>
                   </div>
                 </div>
@@ -2194,18 +2191,18 @@ export default class App extends React.Component {
                 <div style={st("max-width:1560px;margin:0 auto")}>
                   <div style={st("display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap;padding-bottom:24px;border-bottom:1px solid rgba(94,43,23,.14)")}>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#A35730;font-weight:500")}>
-                      Experiences
+                      {copy.experiences.eyebrowLeft}
                     </div>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#96755C")}>
-                      Brunches · Workshops · Tastings · Private events
+                      {copy.experiences.eyebrowRight}
                     </div>
                   </div>
                   <h1 data-reveal="0" style={st("font-family:'Playfair Display',Georgia,serif;font-weight:400;font-size:clamp(44px,7vw,124px);line-height:.93;letter-spacing:-.03em;margin-top:52px")}>
-                    More ways to
+                    {copy.experiences.titleLine1}
                     <br />
-                    spend time at
+                    {copy.experiences.titleLine2}
                     <br />
-                    <span style={st("font-style:italic;color:#A35730")}>Beanery.</span>
+                    <span style={st("font-style:italic;color:#A35730")}>{copy.experiences.titleLine3}</span>
                   </h1>
                 </div>
               </section>
@@ -2256,7 +2253,7 @@ export default class App extends React.Component {
                     </div>
                     <div style={st("overflow:hidden;min-height:440px")}>
                       <div className="hv7" style={st("width:100%;height:100%;transition:transform 1.6s cubic-bezier(.2,.7,.2,1)")}>
-                        <ImageSlot id="exp-banner" placeholder="Long communal table set for brunch, linen, dishes being passed (full-bleed)" />
+                        <ImageSlot id="exp-banner" priority placeholder="Long communal table set for brunch, linen, dishes being passed (full-bleed)" />
                       </div>
                     </div>
                   </div>
@@ -2359,16 +2356,16 @@ export default class App extends React.Component {
                 <div style={st("max-width:1560px;margin:0 auto")}>
                   <div style={st("display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap;padding-bottom:24px;border-bottom:1px solid rgba(94,43,23,.14)")}>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#A35730;font-weight:500")}>
-                      Journal
+                      {copy.journal.eyebrowLeft}
                     </div>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#96755C")}>
-                      Coffee · Food · People · Behind the scenes
+                      {copy.journal.eyebrowRight}
                     </div>
                   </div>
                   <h1 data-reveal="0" style={st("font-family:'Playfair Display',Georgia,serif;font-weight:400;font-size:clamp(44px,7vw,124px);line-height:.93;letter-spacing:-.03em;margin-top:52px")}>
-                    Stories from behind
+                    {copy.journal.titleLine1}
                     <br />
-                    <span style={st("font-style:italic;color:#A35730")}>the cup and plate.</span>
+                    <span style={st("font-style:italic;color:#A35730")}>{copy.journal.titleLine2}</span>
                   </h1>
                 </div>
               </section>
@@ -2377,7 +2374,7 @@ export default class App extends React.Component {
                   <a href="#top" data-reveal="0" style={st("display:grid;grid-template-columns:1.25fr 1fr;gap:56px;align-items:center;padding-bottom:56px;border-bottom:1px solid rgba(94,43,23,.14);cursor:pointer")}>
                     <div style={st("overflow:hidden;aspect-ratio:16/10;background:#EFE3D8")}>
                       <div className="hv7" style={st("width:100%;height:100%;transition:transform 1.5s cubic-bezier(.2,.7,.2,1)")}>
-                        <ImageSlot id="journal-lead" placeholder="Lead story image: roastery drum, beans mid-roast, warm smoke (wide)" />
+                        <ImageSlot id="journal-lead" priority placeholder="Lead story image: roastery drum, beans mid-roast, warm smoke (wide)" />
                       </div>
                     </div>
                     <div>
@@ -2433,16 +2430,16 @@ export default class App extends React.Component {
                 <div style={st("max-width:1560px;margin:0 auto")}>
                   <div style={st("display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap;padding-bottom:24px;border-bottom:1px solid rgba(94,43,23,.14)")}>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#A35730;font-weight:500")}>
-                      Visit Beanery
+                      {copy.visit.eyebrowLeft}
                     </div>
                     <div style={st("font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#96755C")}>
-                      Doors open from 8 AM
+                      {copy.visit.eyebrowRight}
                     </div>
                   </div>
                   <h1 data-reveal="0" style={st("font-family:'Playfair Display',Georgia,serif;font-weight:400;font-size:clamp(44px,7vw,124px);line-height:.93;letter-spacing:-.03em;margin-top:52px")}>
-                    Beanery,
+                    {copy.visit.titleLine1}
                     <br />
-                    <span style={st("font-style:italic;color:#A35730")}>Senapati Bapat Road.</span>
+                    <span style={st("font-style:italic;color:#A35730")}>{copy.visit.titleLine2}</span>
                   </h1>
                   <div data-reveal="80" style={st("display:grid;grid-template-columns:repeat(4,1fr);gap:32px;margin-top:60px;padding-top:32px;border-top:1px solid rgba(94,43,23,.14)")}>
                     <div>
@@ -2450,11 +2447,7 @@ export default class App extends React.Component {
                         Address
                       </div>
                       <p style={st("font-size:14.5px;line-height:1.75;margin-top:14px")}>
-                        Beside Chaturshrungi Temple
-                        <br />
-                        Senapati Bapat Road
-                        <br />
-                        Pune 411016
+                        <Lines text={copy.visit.address} />
                       </p>
                     </div>
                     <div>
@@ -2462,11 +2455,7 @@ export default class App extends React.Component {
                         Hours
                       </div>
                       <p style={st("font-size:14.5px;line-height:1.75;margin-top:14px")}>
-                        Mon – Thu 8:00 – 23:00
-                        <br />
-                        Fri – Sun 8:00 – 23:30
-                        <br />
-                        Kitchen until 22:30
+                        <Lines text={copy.visit.hours} />
                       </p>
                     </div>
                     <div>
@@ -2474,11 +2463,7 @@ export default class App extends React.Component {
                         Contact
                       </div>
                       <p style={st("font-size:14.5px;line-height:1.75;margin-top:14px")}>
-                        +91 98609 34080
-                        <br />
-                        hello@beanery.cafe
-                        <br />
-                        @beanery.pune
+                        <Lines text={copy.visit.contact} />
                       </p>
                     </div>
                     <div>
@@ -2486,11 +2471,7 @@ export default class App extends React.Component {
                         Good to know
                       </div>
                       <p style={st("font-size:14.5px;line-height:1.75;margin-top:14px")}>
-                        Walk-ins welcome
-                        <br />
-                        Laptops welcome until 5 PM
-                        <br />
-                        Street parking after 7 PM
+                        <Lines text={copy.visit.goodToKnow} />
                       </p>
                     </div>
                   </div>
@@ -2600,7 +2581,7 @@ export default class App extends React.Component {
         <div style={st("max-width:1560px;margin:0 auto")}>
           <div style={st("display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:48px;padding-bottom:56px;border-bottom:1px solid rgba(251,248,244,.2)")}>
             <div>
-              <img src={logoLight} alt="Beanery: Coffee · Kitchen" style={st("width:360px;max-width:100%;height:auto;display:block")} />
+              <Img src={logoLight} alt="Beanery: Coffee · Kitchen" style={st("width:360px;max-width:100%;height:auto;display:block")} />
               <div style={st("font-size:9px;letter-spacing:.42em;color:rgba(251,248,244,.55);margin-top:16px;padding-left:.42em")}>
                 PUNE, INDIA
               </div>
@@ -2625,7 +2606,7 @@ export default class App extends React.Component {
                   <div style={st("flex:1;padding:14px 16px;font-size:13px;color:rgba(251,248,244,.45)")}>
                     @beanery.pune
                   </div>
-                  <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="hv3" style={st("display:flex;align-items:center;background:#FBF8F4;color:#5E2B17;border:none;padding:0 20px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;transition:background .3s ease")}>Follow ↗</a>
+                  <a href={site.instagramUrl} target="_blank" rel="noopener noreferrer" className="hv3" style={st("display:flex;align-items:center;background:#FBF8F4;color:#5E2B17;border:none;padding:0 20px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;transition:background .3s ease")}>Follow ↗</a>
                 </div>
                 <div style={st("font-size:11.5px;color:rgba(251,248,244,.45);margin-top:10px")}>
                   New coffees, menu updates and moments from the room.
@@ -2657,11 +2638,7 @@ export default class App extends React.Component {
                 Visit
               </div>
               <div style={st("font-size:14px;line-height:1.9;color:rgba(251,248,244,.85);margin-top:20px")}>
-                Beside Chaturshrungi Temple
-                <br />
-                Senapati Bapat Road
-                <br />
-                Pune 411016
+                <Lines text={copy.visit.address} />
                 <br />
                 <br />
                 Daily from 8:00
@@ -2674,8 +2651,8 @@ export default class App extends React.Component {
                 Follow
               </div>
               <div style={st("display:flex;flex-direction:column;gap:12px;margin-top:20px;font-size:14px")}>
-                <a className="hv17" href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" style={st("color:rgba(251,248,244,.85)")}>Instagram ↗</a>
-                <a className="hv17" href={MAPS_URL} target="_blank" rel="noopener noreferrer" style={st("color:rgba(251,248,244,.85)")}>Google Maps ↗</a>
+                <a className="hv17" href={site.instagramUrl} target="_blank" rel="noopener noreferrer" style={st("color:rgba(251,248,244,.85)")}>Instagram ↗</a>
+                <a className="hv17" href={site.mapsUrl} target="_blank" rel="noopener noreferrer" style={st("color:rgba(251,248,244,.85)")}>Google Maps ↗</a>
                 <a className="hv17" href="tel:+919860934080" style={st("color:rgba(251,248,244,.85)")}>Call Beanery</a>
               </div>
               <button className="hv3" onClick={openReserve} style={st("margin-top:28px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;color:#5E2B17;background:#FBF8F4;border:none;padding:15px 24px;cursor:pointer;transition:all .3s ease")}>
@@ -2686,6 +2663,17 @@ export default class App extends React.Component {
           <div style={st("display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-top:26px;font-size:11px;letter-spacing:.1em;color:rgba(251,248,244,.45)")}>
             <span>© 2026 Beanery</span>
             <span>Privacy · Terms · Accessibility</span>
+            {/* Staff door to the content admin. "The Pass" is the counter where
+                finished plates leave the kitchen - an insider word, so it reads
+                as staff-only without announcing itself to guests. */}
+            <a
+              className="hv17"
+              href="/admin.html"
+              style={st("color:rgba(251,248,244,.4);font-size:10px;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;transition:color .3s ease")}
+              title="Staff content admin"
+            >
+              The Pass
+            </a>
           </div>
         </div>
       </footer>

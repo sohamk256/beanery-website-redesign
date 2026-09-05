@@ -1,4 +1,5 @@
 import { SLOTS } from '../assets/images';
+import { useImageOverride } from '../content/ContentProvider';
 import './ImageSlot.css';
 
 function PlaceholderIcon() {
@@ -12,6 +13,12 @@ function PlaceholderIcon() {
   );
 }
 
+// Cached images can finish decoding before React attaches onLoad, so the ref
+// marks those as settled immediately - otherwise they would stay faded out.
+function markSettled(el) {
+  if (el && el.complete) el.setAttribute('data-settled', '');
+}
+
 /**
  * Responsive image slot using native browser layout.
  *
@@ -20,9 +27,18 @@ function PlaceholderIcon() {
  * resize feedback loop when those calculated dimensions are used inside flex
  * rails. All current crops are centred, so object-fit gives the same visual
  * result without eager downloads, layout churn or observer loops.
+ *
+ * Pass `priority` for slots that sit above the fold on first paint. Those load
+ * eagerly at high fetch priority so the frame is never left standing empty
+ * while the browser defers a lazy image.
  */
-export default function ImageSlot({ id, placeholder, fit = 'cover', alt = '' }) {
-  const slot = SLOTS[id];
+export default function ImageSlot({ id, placeholder, fit = 'cover', alt = '', priority = false }) {
+  // An image uploaded through the admin replaces the bundled photograph for
+  // this slot. Its crop is the slot's default, since a new file has no saved
+  // pan or scale of its own.
+  const override = useImageOverride(id);
+  const bundled = SLOTS[id];
+  const slot = override ? { src: override, s: 1, x: 0, y: 0 } : bundled;
 
   if (!slot) {
     return (
@@ -38,6 +54,8 @@ export default function ImageSlot({ id, placeholder, fit = 'cover', alt = '' }) 
     );
   }
 
+  const settle = (e) => e.currentTarget.setAttribute('data-settled', '');
+
   return (
     <div className="imgslot" data-slot={id} data-filled="">
       <div className="frame">
@@ -45,8 +63,12 @@ export default function ImageSlot({ id, placeholder, fit = 'cover', alt = '' }) 
           src={slot.src}
           alt={alt}
           draggable="false"
-          loading="lazy"
+          loading={priority ? 'eager' : 'lazy'}
+          fetchpriority={priority ? 'high' : 'auto'}
           decoding="async"
+          ref={markSettled}
+          onLoad={settle}
+          onError={settle}
           style={{
             width: '100%',
             height: '100%',

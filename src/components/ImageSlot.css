@@ -15,7 +15,9 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: rgba(127, 127, 127, 0.08);
+  /* Warm sand rather than a neutral grey: while a photograph is still in
+     flight the frame should read as part of the page, not as a grey box. */
+  background: rgba(94, 43, 23, 0.05);
 }
 
 .imgslot .frame img {
@@ -25,6 +27,18 @@
   -webkit-user-drag: none;
   user-select: none;
   display: block;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+/* Set by ImageSlot once the image has loaded (or failed). Cached images get it
+   on the first ref call, so they paint without a transition frame. */
+.imgslot .frame img[data-settled] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .imgslot .frame img { transition: none; }
 }
 
 .imgslot .empty {

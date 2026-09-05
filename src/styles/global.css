@@ -330,9 +330,12 @@ section > [data-rail]{padding-left:var(--beanery-page-gutter)!important;padding-
 .menu-group__heading h2{font-family:'Playfair Display',Georgia,serif;font-size:clamp(35px,3.5vw,54px);font-weight:400;letter-spacing:-.025em;line-height:1.02}
 .menu-group__heading p{margin-top:13px;color:#897466;font-size:13px;line-height:1.55}
 .menu-items{border-top:1px solid rgba(53,38,31,.18)}
-.menu-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:start;padding:23px 0;border-bottom:1px solid rgba(53,38,31,.12)}
+.menu-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:24px;align-items:start;padding:23px 0;border-bottom:1px solid rgba(53,38,31,.12)}
 .menu-item h3{font-family:'Playfair Display',Georgia,serif;font-size:21px;font-weight:400;line-height:1.2}
 .menu-item p{max-width:55ch;margin-top:7px;color:#897466;font-size:12.5px;line-height:1.55}
+/* Optional: an item with no price set skips this element entirely, and the
+   diet mark stays in the same column either way. */
+.menu-price{align-self:start;padding-top:2px;color:#35261F;font-size:14px;font-weight:600;letter-spacing:.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
 .menu-diet{display:grid;place-items:center;width:28px;height:28px}
 .menu-diet::before{content:"";display:block;width:11px;height:11px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px color-mix(in srgb,currentColor 12%,transparent)}
 .menu-diet--veg{color:#4D6B48}.menu-diet--nonveg{color:#B5473C}
@@ -444,3 +447,9 @@ section > [data-rail]{padding-left:var(--beanery-page-gutter)!important;padding-
   [data-overlay="reserve"] select,
   [data-overlay="reserve"] textarea{font-size:16px!important}
 }
+
+/* Safari paints a grey placeholder box for an <img> that has layout dimensions
+   but no decoded data yet. Images rendered through App's <Img> wrapper stay
+   hidden until they settle, so that box never appears. visibility is used
+   rather than opacity so it does not fight the intro's opacity keyframes. */
+img[data-await-load]:not([data-settled]) { visibility: hidden; }

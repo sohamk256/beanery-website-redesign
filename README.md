@@ -186,3 +186,103 @@ programmatically, not by eye:
 That comparison was made against the untouched design. The hero decision, the
 photography and the logo were applied afterwards and are deliberate departures
 from it; everything else still matches.
+
+## Content admin (CMS)
+
+The site's copy, menu and photography are editable through a small
+password-protected admin at `/admin`, backed by an Express API in `server/`.
+
+### Signing in
+
+There are two sign-in modes, and the server picks one: **if `GOOGLE_CLIENT_ID`
+is set, Google sign-in is the only way in** and the password route is refused
+outright. Without it, the admin falls back to username and password. They are
+never both live at once, so there is no second, weaker door.
+
+#### Google sign-in (recommended)
+
+Free, and this build uses the **ID-token flow**, so there is no client *secret*
+to store anywhere — the client ID is a public identifier by design.
+
+1. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   → **APIs & Services → Credentials**, create an **OAuth client ID** of type
+   **Web application**.
+2. Under **Authorised JavaScript origins**, add every origin you will open the
+   admin from:
+   - `http://localhost:5173` — `npm run dev`
+   - `http://localhost:3001` — `npm start`
+   - `https://your-domain` — production
+3. Copy `.env.example` to `.env` and fill in:
+
+   ```
+   GOOGLE_CLIENT_ID=…apps.googleusercontent.com
+   ADMIN_EMAILS=you@gmail.com,manager@gmail.com
+   ```
+
+4. `npm run dev`, then open the admin and click **Sign in with Google**.
+
+`ADMIN_EMAILS` is the allowlist. A valid Google login from an address not on it
+is refused, and the server verifies each token's signature, issuer, audience and
+expiry against Google's public keys — a forged or replayed token gets nowhere.
+If the list is empty the server refuses everyone and says so at startup, rather
+than quietly admitting any Google account on earth.
+
+`.env` is gitignored. Only `.env.example` is committed.
+
+#### Username and password (fallback)
+
+Used only when `GOOGLE_CLIENT_ID` is unset:
+
+```bash
+npm run admin:password   # prompts; the password is not echoed
+npm run dev
+```
+
+The password is hashed with scrypt; only the salt and derived key are stored —
+never the plaintext, and never as a command-line argument.
+
+### First run
+
+```bash
+npm install
+npm run dev              # API on :3001, site on :5173
+```
+
+`npm run dev` starts both processes. Vite proxies `/api` and `/uploads` to the
+API, so the browser stays on one origin and the session cookie is first-party.
+
+### What is editable
+
+| Tab | Covers |
+| --- | --- |
+| Pages | Nav label, both eyebrows, heading lines and intro for all seven pages; address, hours, contact and "good to know" on Visit |
+| Menu | Section headers, plus per dish: name, description, **price**, and **veg / non-veg**. Add, delete and reorder both sections and dishes |
+| Images | Upload WebP/JPEG/PNG/AVIF (8 MB max) and assign one to any of the ~60 image slots; "Original photo" restores the bundled shot |
+| Links | Reserve, Google Maps, live ordering menu and Instagram URLs |
+
+Menu prices ship **empty** — a dish with no price simply renders without one, so
+you can fill in real prices without placeholder numbers going live first.
+
+The Visit address is shared: editing it updates the Visit page, the home page
+contact block and the footer together.
+
+### Production
+
+```bash
+npm run build
+npm start          # serves dist/ and the API together on :3001
+```
+
+`npm start` serves the built site, `/admin`, the API and uploaded files from one
+process. Put it behind HTTPS: the session cookie sets `secure` when
+`NODE_ENV=production`.
+
+### Data
+
+Everything lives in `server/data/` — `content.json` plus an `uploads/` folder.
+It is gitignored, so back it up separately; deleting it resets the site to the
+copy in `shared/content-defaults.js`.
+
+That defaults file is also the site's fallback: if the API is down or absent,
+the pages still render their real copy rather than blank. A static
+`npm run build` deploy with no server works exactly as it did before the CMS.
